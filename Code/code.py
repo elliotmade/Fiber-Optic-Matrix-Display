@@ -8,9 +8,6 @@ import board
 # from analogio import AnalogIn
 import neopixel
 from digitalio import DigitalInOut, Direction, Pull
-import busio
-# import adafruit_ds3231
-#import thisbutton as tb
 import random
 import gc
 
@@ -25,7 +22,7 @@ globalBrightness = 0.1
 
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=1, auto_write=False)
 
-#modeButton = tb.thisButton(board.GP1)
+
 
 
 
@@ -862,12 +859,13 @@ class animationCascade:
 
         #every frame, add 1 to the head and light it up, and add one to the tail and turn it off
         for row in range(7):
-            self.head[row] += 1
+            
             if self.head[row] >= 0 and self.head[row] < 35:
                 p.buffer[row * 35 + self.head[row]].setColor(self.colorIndex[row], True)
             self.tail[row] += 1
             if self.tail[row] >= 0 and self.tail[row] < 35:
                 p.buffer[row * 35 + self.tail[row]].off()
+            self.head[row] += 1
         bufferToGrid()
         refreshDisplay()
 
@@ -1157,33 +1155,19 @@ def fillHearts():
     refreshDisplay()
     print("did it")
 
-
-
-
     time.sleep(3)
     p.dissolve()
     time.sleep(.5)
 
     
 
-#demoSequence()
-
-# twinkle = animationTwinkle(40, False, -0.025)
-# p.setColorAll(10)
-
-
-# p.charToBuffer("fheart", 2)
-# p.charToBuffer("fheart", 10)
-# p.charToBuffer("hheart", 18)
-# p.charToBuffer("eheart", 26)
-# p.setBrightnessAll(.1)
-# bufferToGrid()
-# refreshDisplay()
 
 while True:
     #fillHearts()
     #makingOf()
     #testGhosts()
+
+    #cascade.run()
 
     demoSequence()
 
@@ -1201,41 +1185,4 @@ while True:
 
 
 
-    # testDissolve()
-    # time.sleep(1)
-
-    # testScrollDownText()
-    # time.sleep(1)
-
-#hello world:    
-    # cycleCounter += 1
-    # if cycleCounter >= frameCycles: #time for the next frame of animation
-    #     cycleCounter = 0 
-    #     if tempToggler == True:
-    #         p.stringToBuffer("HELLO", 3)
-    #         tempToggler = not tempToggler
-    #         nextColor()
-    #     else:
-    #         p.stringToBuffer("WORLD", 3)
-    #         tempToggler = not tempToggler
-            
-            
-
-    #     bufferToGrid()
-    #     refreshDisplay()
-
-
-
-
-    # cycleCounter += 1
-    # if cycleCounter >= frameCycles: #time for the next frame of animation
-    #     cycleCounter = 0 
-    #     p.buffer[thisPixel].off()
-    #     thisPixel += 1
-    #     thisPixel = constrain(thisPixel, 0, len(pixelAddressGrid) - 1, True)
-    #     p.buffer[thisPixel].nextColor()
-    #     p.buffer[thisPixel].on()
-    #     bufferToGrid()
-    #     refreshDisplay()
-        
         
