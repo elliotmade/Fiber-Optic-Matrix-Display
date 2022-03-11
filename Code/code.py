@@ -152,7 +152,9 @@ class clock:
                 if self.curTime > self.prevTime:
                     print("Update the display")
                     #first convert the time to a string
-                    hour = str(self.curTime.tm_hour)
+                    hour = self.curTime.tm_hour
+                    if hour > 13: hour -= 12
+                    hour = str(hour)
                     if self.curTime.tm_min > 9:
                         minute = str(self.curTime.tm_min)
                     else:
