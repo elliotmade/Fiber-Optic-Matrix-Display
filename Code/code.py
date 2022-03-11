@@ -1,8 +1,5 @@
 # function to shift a pixel in the grid (or the whole grid?) left right up down diagonal and by distance
 
-
-
-
 import time
 import board
 # from analogio import AnalogIn
@@ -11,6 +8,187 @@ from digitalio import DigitalInOut, Direction, Pull
 import random
 import gc
 
+
+#If not using a the RTC module, Comment the following section out:
+#---------------------------Clock------------------------
+import busio
+import adafruit_ds3231
+from digitalio import DigitalInOut, Direction, Pull
+import thisbutton as tb
+
+modeButton = tb.thisButton(board.GP1)
+upButton = tb.thisButton(board.GP2)
+downButton = tb.thisButton(board.GP3)
+
+
+
+
+#use these during setting, also use these to display the time
+
+class clock:
+    def __init__(self, displaySeconds = True):
+        # self.curHR = 1
+        # self.curMin = 1
+        # self.curSec = 1
+        i2c = busio.I2C(board.GP17, board.GP16)
+        self.ds3231 = adafruit_ds3231.DS3231(i2c)
+        self.lastTimeCheck = 0
+        self.curTime = self.ds3231.datetime
+        self.prevTime = self.ds3231.datetime
+        self.displaySeconds = displaySeconds
+        self.mode = 0 #0 is run, 1 is set the hours, 2 is set the hours
+
+        self.tempHr = 1
+        self.tempMin = 1
+
+    def modeButtonClick(self):
+        print("Mode Click")
+        if self.mode == 0:
+            print("Hmm, nothing assigned to this button for this mode")
+        elif self.mode == 1:
+            self.mode = 2
+            print("Switching to set minutes")
+        elif self.mode == 2:
+            self.mode = 1
+            print("Switching to set minutes")
+
+    def modeButtonLongPress(self):
+        print("Mode Long Press")
+        if self.mode == 0:
+            print("switching to set hours mode")
+            self.tempHr = self.curTime.tm_hour
+            self.tempMin = self.curTime.tm_min
+            p.clearAll()
+            self.displayTempTime()
+            self.mode = 1
+        elif self.mode == 1 or self.mode == 2:
+            print("Saving new time")
+            self.ds3231.datetime = time.struct_time((2022,1,1,self.tempHr,self.tempMin,0,6,1,-1))
+            #do saving time to RTC here
+            p.clearAll()
+            self.mode = 0
+
+    def upButtonClick(self):
+        print("Up Click")
+        if self.mode == 0:
+            print("Next color")
+            nextColor()
+        elif self.mode == 1:
+            print("Increase hour")
+            self.tempHr += 1
+            if self.tempHr > 23: self.tempHr = 0
+            self.displayTempTime()
+        elif self.mode == 2:
+            print("Increase minute")
+            self.tempMin += 1
+            if self.tempMin > 59: self.tempMin = 0
+            self.displayTempTime()
+
+    def downButtonClick(self):
+        print("Down Click")
+        if self.mode == 0:
+            print("Previous color")
+            prevColor()
+        elif self.mode == 1:
+            print("Decrease hour")
+            self.tempHr -= 1
+            if self.tempHr < 0: self.tempHr = 23
+            self.displayTempTime()
+        elif self.mode == 2:
+            print("Decrease minute")
+            self.tempMin -= 1
+            if self.tempMin < 0: self.tempMin = 59
+            self.displayTempTime()
+
+    def displayTempTime(self):
+        if self.tempHr > 9:
+            hour = str(self.tempHr)
+        else:
+            hour = "0" + str(self.tempHr)
+        
+        if self.tempMin > 9:
+            minute = str(self.tempMin)
+        else:
+            minute = "0" + str(self.tempMin)
+        self.displayTime(hour + " : " + minute)
+
+    def readTime(self):
+        self.prevTime = self.curTime
+        self.curTime = self.ds3231.datetime
+        
+        
+        #print(str(self.curHR) + ":" + str(self.curMin) + ":" + str(self.curSec))
+
+
+    def displayTime(self, timeString):
+        print(timeString)
+        #center the time depending the digits?
+        if self.displaySeconds == True: #this is the longest 10, 11, or 12 hour time
+            print("longest time possible")
+            p.clearAll()
+            p.stringToBuffer(timeString,0,0)
+            bufferToGrid()
+            refreshDisplay()
+        else:
+            print("shortest time")
+            p.clearAll()
+            p.stringToBuffer(timeString,6,0) #this is the shortest time
+            bufferToGrid()
+            refreshDisplay()
+
+
+    def tick(self):
+        #check the RTC every so often.  If it's different than last time, update the display
+
+        modeButton.tick()
+        upButton.tick()
+        downButton.tick()
+        
+        if self.mode == 0:
+            now = time.monotonic_ns()
+            if now > self.lastTimeCheck + 100000:
+                self.lastTimeCheck = now
+                self.readTime()
+                if self.curTime > self.prevTime:
+                    print("Update the display")
+                    #first convert the time to a string
+                    hour = str(self.curTime.tm_hour)
+                    if self.curTime.tm_min > 9:
+                        minute = str(self.curTime.tm_min)
+                    else:
+                        minute = "0" + str(self.curTime.tm_min)
+                    if self.curTime.tm_sec > 9:
+                        second = str(self.curTime.tm_sec)
+                    else:
+                        second = "0" + str(self.curTime.tm_sec)
+                    # self.curSec = self.curTime.tm_sec
+                    if self.displaySeconds == True:
+                        timeString = hour + " : " + minute + " : " + second
+                    else:
+                        timeString = hour + " : " + minute
+
+                    #center the time depending the digits?
+
+                    self.displayTime(timeString)
+        
+        else:
+            print("Set Mode")
+        #print("Tick")
+
+
+
+
+
+c = clock(True)
+
+modeButton.assignClick(c.modeButtonClick)
+modeButton.assignLongPressStart(c.modeButtonLongPress)
+
+upButton.assignClick(c.upButtonClick)
+downButton.assignClick(c.downButtonClick)
+#downButton.assignLongPressStart(c.downButtonLongPress)
+
+#-----------------------End Clock------------------------
 
 
 debug = False
@@ -325,6 +503,14 @@ class pixelBuffer:
             [0,1,0],
             [1,1,1]
             ],
+    # "1":   [[0,0,1,0,0], #add padding to 5 columns?
+    #         [0,1,1,0,0],
+    #         [0,0,1,0,0],
+    #         [0,0,1,0,0],
+    #         [0,0,1,0,0],
+    #         [0,0,1,0,0],
+    #         [0,1,1,1,0]
+    #         ],
     "2":   [[0,1,1,1,0], 
             [1,0,0,0,1],
             [0,0,0,0,1],
@@ -904,6 +1090,16 @@ def nextColor():
     p.setColorAll(globalColorIndex)
     if debug == True: print("Global color index is now: " + str(globalColorIndex))
 
+def prevColor():
+    global globalColorIndex
+    global globalColor
+    globalColorIndex -= 1
+    if globalColorIndex <= -1:
+        globalColorIndex = colorCount - 1
+    globalColor = colorList[globalColorIndex]
+    p.setColorAll(globalColorIndex)
+    if debug == True: print("Global color index is now: " + str(globalColorIndex))
+
 
 
 p.clearAll()
@@ -1169,7 +1365,7 @@ while True:
 
     #cascade.run()
 
-    demoSequence()
+    #demoSequence()
 
     #modeButton.tick()
 
@@ -1183,6 +1379,7 @@ while True:
     # testFadeOut()
     # time.sleep(1)
 
+    c.tick()
 
 
         
