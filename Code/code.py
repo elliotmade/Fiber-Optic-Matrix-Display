@@ -4,7 +4,6 @@ import time
 import board
 # from analogio import AnalogIn
 import neopixel
-from digitalio import DigitalInOut, Direction, Pull
 import random
 import gc
 
@@ -13,7 +12,6 @@ import gc
 #---------------------------Clock------------------------
 import busio
 import adafruit_ds3231
-from digitalio import DigitalInOut, Direction, Pull
 import thisbutton as tb
 
 modeButton = tb.thisButton(board.GP1)
@@ -54,12 +52,13 @@ class clock:
 
     def modeButtonLongPress(self):
         print("Mode Long Press")
+        
         if self.mode == 0:
             print("switching to set hours mode")
             self.tempHr = self.curTime.tm_hour
             self.tempMin = self.curTime.tm_min
             p.clearAll()
-            self.displayTempTime()
+            #self.displayTempTime() #this will cause a crash if the RTC doesn't have a time already saved, so it is commented out for now.
             self.mode = 1
         elif self.mode == 1 or self.mode == 2:
             print("Saving new time")
@@ -123,18 +122,39 @@ class clock:
     def displayTime(self, timeString):
         print(timeString)
         #center the time depending the digits?
-        if self.displaySeconds == True: #this is the longest 10, 11, or 12 hour time
-            print("longest time possible")
-            p.clearAll()
-            p.stringToBuffer(timeString,0,0)
-            bufferToGrid()
-            refreshDisplay()
-        else:
-            print("shortest time")
-            p.clearAll()
-            p.stringToBuffer(timeString,6,0) #this is the shortest time
-            bufferToGrid()
-            refreshDisplay()
+        print (self.getStringPixelWidth(timeString))
+
+        offset = int((35 - self.getStringPixelWidth(timeString)) / 2)
+        print(offset)
+
+        p.clearAll()
+        p.stringToBuffer(timeString,offset,0)
+        bufferToGrid()
+        refreshDisplay()
+
+        # if self.displaySeconds == True: #this is the longest 10, 11, or 12 hour time
+        #     print("longest time possible")
+        #     p.clearAll()
+        #     p.stringToBuffer(timeString,0,0)
+        #     bufferToGrid()
+        #     refreshDisplay()
+        # else:
+        #     print("shortest time")
+        #     p.clearAll()
+        #     p.stringToBuffer(timeString,6,0) #this is the shortest time
+        #     bufferToGrid()
+        #     refreshDisplay()
+
+    def getStringPixelWidth(self, string):
+        length = 0
+        for char in string:
+            if char == ":" or char == " ":
+                length += 1
+            elif char == "1":
+                length += 3
+            else:
+                length += 5
+        return length
 
 
     def tick(self):
