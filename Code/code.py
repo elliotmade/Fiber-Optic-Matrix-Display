@@ -8,11 +8,11 @@ import random
 import gc
 
 
-#If not using a the RTC module, Comment the following section out:
+#If not using a the RTC module, Comment the following long section out (down a ways to find the end, with some more ----'s):
 #---------------------------Clock------------------------
 import busio
 import adafruit_ds3231
-import thisbutton as tb
+import thisbutton as tb #this library is available here: https://github.com/elliotmade/This-Button
 
 modeButton = tb.thisButton(board.GP1)
 upButton = tb.thisButton(board.GP2)
